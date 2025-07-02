@@ -19,8 +19,8 @@ export async function GET() {
 
   roles.forEach((role) => {
     if (role.permissions) {
-      for (const [key, value] of Object.entries(role.permissions)) {
-        if (value) allPermissions.add(key)
+      for (const key of Object.keys(role.permissions)) {
+        allPermissions.add(key)  // ✅ includes all keys, even if false
       }
     }
   })
@@ -60,4 +60,37 @@ export async function DELETE(req: Request) {
   return NextResponse.json({
     message: `Permission "${name}" deleted from all roles`,
   })
+}
+
+export async function POST(req: Request) {
+  const { name } = await req.json()
+
+  if (!name) {
+    return NextResponse.json({ error: 'Permission name is required' }, { status: 400 })
+  }
+
+  const roles = await prisma.role.findMany({
+    select: { id: true, permissions: true },
+  }) as RolePerm[]
+
+  // Add the permission to all roles (default: false)
+  await Promise.all(
+    roles.map((role) => {
+      const updated = { ...(role.permissions || {}) }
+
+      // Don't overwrite if it already exists
+      if (!(name in updated)) {
+        updated[name] = false
+      }
+
+      return prisma.role.update({
+        where: { id: role.id },
+        data: { permissions: updated },
+      })
+    })
+  )
+
+  return NextResponse.json({
+    message: `Permission "${name}" added to all roles (default: false)`,
+  }, { status: 201 })
 }

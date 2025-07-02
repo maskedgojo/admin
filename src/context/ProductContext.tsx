@@ -34,22 +34,23 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
-  const fetchProducts = async () => {
-    try {
-      const res = await axios.get('/api/products')
-      setProducts(res.data)
-      setError(null)
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message)
-      } else {
-        setError('Failed to fetch products')
-      }
-    } finally {
-      setLoading(false)
+const fetchProducts = async () => {
+  console.log('[ProductContext] fetchProducts triggered') // 👈 add this
+  try {
+    const res = await axios.get('/api/products')
+    setProducts(res.data)
+    setError(null)
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      setError(err.message)
+    } else {
+      setError('Failed to fetch products')
     }
+  } finally {
+    setLoading(false)
   }
+}
+
 
 const addProduct = async (
   product: Omit<Product, 'id' | 'createdAt'>

@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma'
 
 // GET: Fetch all products
 export async function GET() {
+  console.log('[API] GET /api/products hit') // 👈 add this
   try {
     const products = await prisma.product.findMany({
       orderBy: { createdAt: 'desc' },
@@ -14,6 +15,7 @@ export async function GET() {
     return NextResponse.json({ error: 'Failed to fetch products' }, { status: 500 })
   }
 }
+
 
 // POST: Create a new product
 export async function POST(req: Request) {

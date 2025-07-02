@@ -36,17 +36,12 @@ export default async function ProductsPage() {
     )
   }
 
-  const products = await prisma.product.findMany({
-    orderBy: {
-      createdAt: 'desc',
-    },
-  })
+return (
+  <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <main className="flex-1 p-4 md:p-8 transition-all duration-300">
+      <ProductTable /> {/* ❌ don't pass props */}
+    </main>
+  </div>
+)
 
-  return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <main className="flex-1 p-4 md:p-8 transition-all duration-300">
-        <ProductTable products={products} />
-      </main>
-    </div>
-  )
 }
