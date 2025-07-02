@@ -17,8 +17,14 @@ interface ProductContextType {
   loading: boolean
   error: string | null
   refetchProducts: () => Promise<void>
-  addProduct: (product: Omit<Product, 'id' | 'createdAt'>) => Promise<void>
-  updateProduct: (id: number, updatedProduct: Partial<Product>) => Promise<void>
+
+  /* --------- ONLY this line changes ---------- */
+addProduct: (product: Omit<Product, 'id' | 'createdAt'>) => Promise<Product>
+
+  updateProduct: (
+    id: number,
+    updatedProduct: Partial<Product>
+  ) => Promise<void>
   deleteProduct: (id: number) => Promise<void>
 }
 
@@ -34,22 +40,31 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
       const res = await axios.get('/api/products')
       setProducts(res.data)
       setError(null)
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch products')
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message)
+      } else {
+        setError('Failed to fetch products')
+      }
     } finally {
       setLoading(false)
     }
   }
 
-  const addProduct = async (product: Omit<Product, 'id' | 'createdAt'>) => {
-    try {
-      const res = await axios.post('/api/products', product)
-      setProducts(prev => [res.data, ...prev])
-    } catch (err) {
-      console.error('Add product error:', err)
-      throw err
-    }
+const addProduct = async (
+  product: Omit<Product, 'id' | 'createdAt'>
+): Promise<Product> => {
+  try {
+    const res = await axios.post('/api/products', product)
+    const newProduct: Product = res.data                 // ← typed result
+    setProducts(prev => [newProduct, ...prev])
+    return newProduct                                    // ← **return it**
+  } catch (err) {
+    console.error('Add product error:', err)
+    throw err
   }
+}
+
 
   const updateProduct = async (id: number, updatedProduct: Partial<Product>) => {
     try {

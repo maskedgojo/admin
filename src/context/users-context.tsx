@@ -8,11 +8,15 @@ export interface User {
   id: number
   name: string
   email: string
-  dob: string
+  dob: string | Date
   address: string
+
+  /* 👇 add the two missing fields */
+  createdAt: string | Date        // shown in the “Created” column
+  emailVerified?: string | Date   // optional – only present when verified
+
   userRoles: { role: { id: number; name: string } }[]
 }
-
 // Define context shape
 interface UsersContextType {
   users: User[]
@@ -36,8 +40,12 @@ export const UsersProvider = ({ children }: { children: ReactNode }) => {
       const res = await axios.get('/api/users') // Make sure this API exists
       setUsers(res.data)
       setError(null)
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch users')
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message)
+      } else {
+        setError('Failed to fetch users')
+      }
       setUsers([])
     } finally {
       setLoading(false)

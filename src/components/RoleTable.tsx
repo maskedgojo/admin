@@ -2,20 +2,12 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
-import { useRouter } from 'next/navigation'
 import axios from 'axios'
 import { useRoleContext } from '@/context/role-context'
 import TableSkeleton from '@/components/ui/TableSkeleton' 
 
-type Role = {
-  id: number
-  name: string
-  description?: string
-  permissions: Record<string, boolean>
-}
 
 export default function RoleTablePage() {
-  const router = useRouter()
   const { roles, loading, refreshRoles } = useRoleContext()
 
   const [allPermissions, setAllPermissions] = useState<string[]>([])
@@ -25,14 +17,14 @@ export default function RoleTablePage() {
     description: '',
     selectedPermissions: [] as string[]
   })
-  const [editId, setEditId] = useState<number | null>(null)
+  const [editId, setEditId] = useState<string | null>(null)
 
   useEffect(() => {
     const loadPermissions = async () => {
       try {
         const res = await axios.get('/api/permissions')
         setAllPermissions(res.data)
-      } catch (error) {
+      } catch {
         toast.error('Failed to load permissions')
       }
     }
@@ -40,15 +32,19 @@ export default function RoleTablePage() {
     loadPermissions()
   }, [])
 
-  const filteredRoles = useMemo(() => {
-    if (!searchValue.trim()) return roles
-    const lower = searchValue.toLowerCase()
-    return roles.filter(r =>
-      r.name.toLowerCase().includes(lower) ||
-      r.description?.toLowerCase()?.includes(lower) ||
-      Object.keys(r.permissions).some(p => r.permissions[p] && p.toLowerCase().includes(lower))
+const filteredRoles = useMemo(() => {
+  if (!searchValue.trim()) return roles
+  const lower = searchValue.toLowerCase()
+
+  return roles.filter(r =>
+    r.name.toLowerCase().includes(lower) ||
+    r.description?.toLowerCase()?.includes(lower) ||
+    Object.entries(r.permissions ?? {}).some(
+      ([perm, enabled]) => enabled && perm.toLowerCase().includes(lower)
     )
-  }, [roles, searchValue])
+  )
+}, [roles, searchValue])
+
 
   const handleSave = async () => {
     if (!form.name) {
@@ -76,12 +72,12 @@ export default function RoleTablePage() {
       await refreshRoles()
       setForm({ name: '', description: '', selectedPermissions: [] })
       setEditId(null)
-    } catch (error) {
+    } catch {
       toast.error('Save failed')
     }
   }
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this role?')) return
     try {
       await axios.delete(`/api/roles?id=${id}`)
@@ -91,7 +87,7 @@ export default function RoleTablePage() {
         setForm({ name: '', description: '', selectedPermissions: [] })
         setEditId(null)
       }
-    } catch (error) {
+    } catch {
       toast.error('Delete failed')
     }
   }
@@ -221,7 +217,7 @@ if (loading) {
                   <td className="p-3 text-gray-600">{role.description || '-'}</td>
                   <td className="p-3">
                     <div className="flex flex-wrap gap-1">
-                      {Object.entries(role.permissions).map(([perm, enabled]) =>
+                      {Object.entries(role.permissions ?? {}).map(([perm, enabled]) =>
                         enabled ? (
                           <span
                             key={perm}
@@ -242,8 +238,8 @@ if (loading) {
                           setForm({
                             name: role.name,
                             description: role.description || '',
-                            selectedPermissions: Object.entries(role.permissions)
-                              .filter(([_, enabled]) => enabled)
+                            selectedPermissions: Object.entries(role.permissions ?? {})
+                              .filter(([, enabled]) => enabled)
                               .map(([perm]) => perm)
                           })
                         }}

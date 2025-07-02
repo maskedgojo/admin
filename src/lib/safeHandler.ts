@@ -8,24 +8,22 @@ export function withSafeHandler(
   return async (req: NextRequest) => {
     try {
       return await handler(req);
-    } catch (error: any) {
-      // --- Extract file location from stack if available
-      const stack = error?.stack || '';
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error('Unknown error');
+
+      const stack = err.stack || '';
       const locationMatch = stack.match(/\((.*?):(\d+):(\d+)\)/);
       const fileLocation = locationMatch ? `${locationMatch[1]}:${locationMatch[2]}` : 'unknown';
 
-      // --- Log the error with full context
-      logToFile('error', error.message || 'Unhandled error', {
+      logToFile('error', err.message, {
         origin: req.url,
         errorStack: stack,
         fileLocation,
         req,
       });
 
-      // --- Redirect silently
       const session = await auth();
       const redirectURL = session ? '/admin?error=1' : '/?error=1';
-
       return NextResponse.redirect(new URL(redirectURL, req.url));
     }
   };

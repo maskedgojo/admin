@@ -2,124 +2,85 @@ import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 
+/* no need for RouteContext or a helper – just use the correct shape */
+type Params = { id: string }
+
+/* ───────────── DELETE ───────────── */
 export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _req: NextRequest,
+  { params }: { params: Promise<Params> }  //  ← Promise
 ) {
-  try {
-    const id = parseInt(params.id)
+  const { id } = await params              //  ← await it
+  const userId = Number(id)
 
-    if (isNaN(id)) {
-      return NextResponse.json(
-        { error: 'Invalid user ID format' },
-        { status: 400 }
-      )
-    }
-
-    // Check if user exists
-    const user = await prisma.user.findUnique({ where: { id } })
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
-    }
-
-    // Delete associated userRoles first
-    await prisma.userRole.deleteMany({ where: { userId: id } })
-
-    // Then delete the user
-    await prisma.user.delete({ where: { id } })
-
-    return NextResponse.json({ message: 'User deleted successfully' }, { status: 200 })
-  } catch (error) {
-    console.error('Failed to delete user:', error)
-    return NextResponse.json(
-      { error: 'Failed to delete user. Please try again.' },
-      { status: 500 }
-    )
+  if (Number.isNaN(userId)) {
+    return NextResponse.json({ error: 'Invalid user ID' }, { status: 400 })
   }
+
+  const user = await prisma.user.findUnique({ where: { id: userId } })
+  if (!user) {
+    return NextResponse.json({ error: 'User not found' }, { status: 404 })
+  }
+
+  await prisma.userRole.deleteMany({ where: { userId } })
+  await prisma.user.delete({ where: { id: userId } })
+
+  return NextResponse.json({ message: 'User deleted' }, { status: 200 })
 }
 
+/* ───────────── PUT ───────────── */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<Params> }   //  ← Promise
 ) {
-  try {
-    const id = parseInt(params.id)
+  const { id } = await params               //  ← await it
+  const userId = Number(id)
 
-    if (isNaN(id)) {
-      return NextResponse.json(
-        { error: 'Invalid user ID format' },
-        { status: 400 }
-      )
-    }
-
-    const { name, email, password, dob, address, roles } = await request.json()
-
-    const existingUser = await prisma.user.findUnique({ where: { id } })
-    if (!existingUser) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
-    }
-
-    // Hash new password if provided
-    const hashedPassword = password?.trim()
-      ? await bcrypt.hash(password, 10)
-      : undefined
-
-    // Update user basic details
-    await prisma.user.update({
-      where: { id },
-      data: {
-        name,
-        email,
-        password: hashedPassword || existingUser.password,
-        dob: dob ? new Date(dob) : existingUser.dob,
-        address
-      }
-    })
-
-    // Update roles through userRole table
-    if (Array.isArray(roles)) {
-      // Remove existing roles
-      await prisma.userRole.deleteMany({ where: { userId: id } })
-
-      // Add new roles
-      await prisma.userRole.createMany({
-        data: roles.map((roleId: number) => ({
-          userId: id,
-          roleId
-        })),
-        skipDuplicates: true
-      })
-    }
-
-    // Return updated user with roles
-    const updatedUser = await prisma.user.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        dob: true,
-        address: true,
-        createdAt: true,
-        userRoles: {
-          select: {
-            role: {
-              select: {
-                id: true,
-                name: true
-              }
-            }
-          }
-        }
-      }
-    })
-
-    return NextResponse.json(updatedUser, { status: 200 })
-  } catch (error) {
-    console.error('Failed to update user:', error)
-    return NextResponse.json(
-      { error: 'Failed to update user. Please try again.' },
-      { status: 500 }
-    )
+  if (Number.isNaN(userId)) {
+    return NextResponse.json({ error: 'Invalid user ID' }, { status: 400 })
   }
+
+  const body      = await request.json()
+  const { name, email, password, dob, address, roles } = body
+  const existing  = await prisma.user.findUnique({ where: { id: userId } })
+  if (!existing) {
+    return NextResponse.json({ error: 'User not found' }, { status: 404 })
+  }
+
+  const hashedPwd =
+    password?.trim() ? await bcrypt.hash(password, 10) : undefined
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      name,
+      email,
+      password: hashedPwd ?? existing.password,
+      dob: dob ? new Date(dob) : existing.dob,
+      address,
+    },
+  })
+
+  if (Array.isArray(roles)) {
+    await prisma.userRole.deleteMany({ where: { userId } })
+    await prisma.userRole.createMany({
+      data: roles.map((roleId: number) => ({ userId, roleId })),
+      skipDuplicates: true,
+    })
+  }
+
+  const updated = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      dob: true,
+      address: true,
+      createdAt: true,
+      userRoles: { select: { role: { select: { id: true, name: true } } } },
+    },
+  })
+
+  return NextResponse.json(updated, { status: 200 })
 }

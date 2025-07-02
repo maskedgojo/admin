@@ -6,3 +6,76 @@ userId: 1
 ------------------------------------------------------------
 [2025-06-30T10:48:21.384Z] [INFO] [auth/signOut] User "sabarniklahiri@gmail.com" logged out
 ------------------------------------------------------------
+[2025-07-01T11:04:15.305Z] [INFO] [auth/signOut] User "test@gmail.in" logged out
+------------------------------------------------------------
+[2025-07-01T11:08:21.142Z] [INFO] [auth/signOut] User "test@gmail.in" signed out
+------------------------------------------------------------
+[2025-07-01T11:11:34.272Z] [INFO] Login success
+userId: 51
+------------------------------------------------------------
+[2025-07-01T11:11:34.273Z] [INFO] [/login] User "test@gmail.in" signed in
+------------------------------------------------------------
+[2025-07-01T11:19:30.802Z] [INFO] [authOptions.signOut] User "test@gmail.in" logged out
+------------------------------------------------------------
+[2025-07-01T11:19:39.168Z] [INFO] [authOptions.authorize] User "test@gmail.in" authenticated successfully
+userId: 51
+role: Admin
+------------------------------------------------------------
+[2025-07-01T11:19:39.170Z] [INFO] [authOptions.signIn] User "test@gmail.in" logged in
+------------------------------------------------------------
+[2025-07-01T11:24:03.220Z] [INFO] [authOptions.signOut] User "test@gmail.in" logged out
+------------------------------------------------------------
+[2025-07-01T11:24:11.294Z] [INFO] [authOptions.authorize] User "test@gmail.com" authenticated successfully
+userId: 51
+role: Admin
+------------------------------------------------------------
+[2025-07-01T11:24:11.295Z] [INFO] [authOptions.signIn] User "test@gmail.com" logged in
+------------------------------------------------------------
+[2025-07-01T11:27:31.515Z] [INFO] [authOptions.signOut] User "test@gmail.com" logged out
+------------------------------------------------------------
+[2025-07-01T11:27:41.010Z] [INFO] [authOptions.authorize] User "test@gmail.in" authenticated successfully
+userId: 51
+role: Admin
+------------------------------------------------------------
+[2025-07-01T11:27:41.012Z] [INFO] [authOptions.signIn] User "test@gmail.in" logged in
+------------------------------------------------------------
+[2025-07-01T12:48:06.101Z] [INFO] [authOptions.signOut] User "test@gmail.in" logged out
+------------------------------------------------------------
+[2025-07-01T12:50:55.346Z] [INFO] [authOptions.authorize] User "test@gmail.in" authenticated successfully
+userId: 51
+role: Admin
+------------------------------------------------------------
+[2025-07-01T12:50:55.348Z] [INFO] [authOptions.signIn] User "test@gmail.in" logged in
+------------------------------------------------------------
+[2025-07-01T12:51:18.499Z] [INFO] [authOptions.signOut] User "test@gmail.in" logged out
+------------------------------------------------------------
+[2025-07-01T12:51:49.416Z] [INFO] [authOptions.authorize] User "test@mail.com" authenticated successfully
+userId: 54
+role: User
+------------------------------------------------------------
+[2025-07-01T12:51:49.419Z] [INFO] [authOptions.signIn] User "test@mail.com" logged in
+------------------------------------------------------------
+[2025-07-01T12:52:41.929Z] [INFO] [authOptions.signOut] User "test@mail.com" logged out
+------------------------------------------------------------
+[2025-07-01T12:53:23.492Z] [INFO] [authOptions.authorize] User "ex@mil.in" authenticated successfully
+userId: 55
+role: User
+------------------------------------------------------------
+[2025-07-01T12:53:23.494Z] [INFO] [authOptions.signIn] User "ex@mil.in" logged in
+------------------------------------------------------------
+[2025-07-02T03:49:41.647Z] [INFO] [authOptions.signOut] User "ex@mil.in" logged out
+------------------------------------------------------------
+[2025-07-02T03:49:50.949Z] [INFO] [authOptions.authorize] User "test@gmail.in" authenticated successfully
+userId: 51
+role: Admin
+------------------------------------------------------------
+[2025-07-02T03:49:50.951Z] [INFO] [authOptions.signIn] User "test@gmail.in" logged in
+------------------------------------------------------------
+[2025-07-02T04:26:25.059Z] [INFO] [authOptions.signOut] User "test@gmail.in" logged out
+------------------------------------------------------------
+[2025-07-02T04:26:41.357Z] [INFO] [authOptions.authorize] User "test@gmail.in" authenticated successfully
+userId: 51
+role: Admin
+------------------------------------------------------------
+[2025-07-02T04:26:41.359Z] [INFO] [authOptions.signIn] User "test@gmail.in" logged in
+------------------------------------------------------------

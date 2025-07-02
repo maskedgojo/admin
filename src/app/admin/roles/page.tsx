@@ -8,13 +8,8 @@ import { Save, Trash2, Edit, Plus, X } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import { redirect } from 'next/navigation'
 import { useRoleContext } from '@/context/role-context'
+import { Role } from '@/context/role-context'
 
-type Role = {
-  id: number
-  name: string
-  description?: string
-  permissions: Record<string, boolean>
-}
 
 export default function RolesPage() {
   const { data: session } = useSession()
@@ -32,8 +27,7 @@ export default function RolesPage() {
     name: ''
   })
 
-  const [editRoleId, setEditRoleId] = useState<number | null>(null)
-
+const [editRoleId, setEditRoleId] = useState<string | null>(null)
   useEffect(() => {
     if (!session) {
       redirect('/login')
@@ -46,6 +40,7 @@ export default function RolesPage() {
       const res = await axios.get('/api/permissions')
       setPermissions(res.data)
     } catch (e) {
+      console.log(e)
       toast.error('Failed to load permissions')
     }
   }
@@ -83,6 +78,7 @@ export default function RolesPage() {
       await refreshRoles()
       resetRoleForm()
     } catch (e) {
+      console.log(e)
       toast.error('Operation failed')
     }
   }
@@ -99,11 +95,13 @@ export default function RolesPage() {
       setPermForm({ name: '' })
       await loadPermissions()
     } catch (e) {
+      console.log(e)
+
       toast.error('Operation failed')
     }
   }
 
-  const deleteRole = async (id: number) => {
+  const deleteRole = async (id: string) => {
     if (!confirm('Are you sure?')) return
 
     try {
@@ -111,6 +109,8 @@ export default function RolesPage() {
       toast.success('Role deleted')
       await refreshRoles()
     } catch (e) {
+      console.log(e)
+
       toast.error('Delete failed')
     }
   }
@@ -123,18 +123,19 @@ export default function RolesPage() {
       toast.success('Permission deleted')
       await loadPermissions()
     } catch (e) {
+      console.log(e)
+
       toast.error('Delete failed')
     }
   }
-
   const startRoleEdit = (role: Role) => {
     setEditRoleId(role.id)
     setRoleForm({
       name: role.name,
       description: role.description || '',
-      permissions: Object.entries(role.permissions)
-        .filter(([_, enabled]) => enabled)
-        .map(([perm]) => perm)
+      permissions: Object.entries(role.permissions ?? {})
+        .filter(([, enabled]) => enabled)
+        .map(([perm]) => perm),
     })
   }
 
@@ -324,18 +325,22 @@ export default function RolesPage() {
                         <div className="mt-3">
                           <div className="text-xs font-medium text-gray-500 mb-1">PERMISSIONS</div>
                           <div className="flex flex-wrap gap-2">
-                            {Object.entries(role.permissions).some(([_, enabled]) => enabled) ? (
-                              Object.entries(role.permissions).map(([perm, enabled]) => (
-                                enabled && (
-                                  <span key={perm} className="bg-indigo-50 text-indigo-700 px-3 py-1 text-xs rounded-full">
+                            {Object.entries(role.permissions ?? {}).some(([, enabled]) => enabled) ? (
+                              Object.entries(role.permissions ?? {})
+                                .filter(([, enabled]) => enabled)
+                                .map(([perm]) => (
+                                  <span
+                                    key={perm}
+                                    className="bg-indigo-50 text-indigo-700 px-3 py-1 text-xs rounded-full"
+                                  >
                                     {perm}
                                   </span>
-                                )
-                              ))
+                                ))
                             ) : (
                               <span className="text-gray-500 text-sm">No permissions assigned</span>
                             )}
                           </div>
+
                         </div>
                       </div>
 

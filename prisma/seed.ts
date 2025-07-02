@@ -1,7 +1,8 @@
 // prisma/seed.ts (CommonJS version)
 
-const { PrismaClient } = require('@prisma/client');
-const { faker } = require('@faker-js/faker');
+import { PrismaClient } from '@prisma/client'
+import { faker } from '@faker-js/faker'
+
 
 const prisma = new PrismaClient();
 
@@ -60,7 +61,9 @@ async function main() {
 
 main()
   .catch((e) => {
-    console.error('❌ Seeding error:', e);
-    process.exit(1);
+    console.error('❌ Seeding error:', e)
+    process.exit(1)
   })
-  .finally(() => prisma.$disconnect());
+  .finally(() => prisma.$disconnect())
+
+export {}     

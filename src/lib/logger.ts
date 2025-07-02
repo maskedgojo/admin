@@ -37,8 +37,8 @@ export function logToFile(
     origin?: string;
     errorStack?: string;
     fileLocation?: string;
-    req?: Request | { url?: string; method?: string; headers?: any };
-    [key: string]: any; // ✅ Allow custom metadata (userId, email, etc.)
+    req?: Request | { url?: string; method?: string; headers?: Record<string, unknown> };
+    [key: string]: unknown; // ✅ Allow custom metadata (userId, email, etc.)
   }
 ) {
   const timestamp = new Date().toISOString();
@@ -58,23 +58,34 @@ export function logToFile(
     lines.push('StackTrace:\n' + meta.errorStack.trim());
   }
 
-  if (meta?.req) {
-    const method = meta.req.method || 'UNKNOWN';
-    const url = meta.req.url || 'UNKNOWN';
-    const userAgent = meta.req.headers?.['user-agent'] || meta.req.headers?.get?.('user-agent') || 'UNKNOWN';
-    const ip = meta.req.headers?.['x-forwarded-for'] || 'UNKNOWN';
+   if (meta?.req) {
+    const method = meta.req.method || 'UNKNOWN'
+    const url    = meta.req.url    || 'UNKNOWN'
 
-    lines.push(`Request Info:\n  Method: ${method}\n  URL: ${url}\n  UserAgent: ${userAgent}\n  IP: ${ip}`);
-  }
+    /* ──────────  safe header lookup  ────────── */
+    let userAgent = 'UNKNOWN'
+    let ip        = 'UNKNOWN'
 
-  // ✅ Log all additional custom fields (except known ones already handled above)
-  const knownKeys = ['origin', 'errorStack', 'fileLocation', 'req'];
-  Object.entries(meta || {}).forEach(([key, value]) => {
-    if (!knownKeys.includes(key)) {
-      lines.push(`${key}: ${typeof value === 'object' ? JSON.stringify(value) : String(value)}`);
+    const hdrs = meta.req.headers
+    if (hdrs) {
+      if (hdrs instanceof Headers) {
+        // native Request.headers
+        userAgent = hdrs.get('user-agent')      ?? 'UNKNOWN'
+        ip        = hdrs.get('x-forwarded-for') ?? 'UNKNOWN'
+      } else {
+        // plain object { [key: string]: unknown }
+        const h = hdrs as Record<string, unknown>
+        if (typeof h['user-agent']      === 'string') userAgent = h['user-agent']
+        if (typeof h['x-forwarded-for'] === 'string') ip        = h['x-forwarded-for']
+      }
     }
-  });
 
-  lines.push('------------------------------------------------------------\n');
-  fs.appendFileSync(filePath, lines.join('\n'));
+    lines.push(
+      `Request Info:\n` +
+      `  Method: ${method}\n` +
+      `  URL: ${url}\n` +
+      `  UserAgent: ${userAgent}\n` +
+      `  IP: ${ip}`
+    )
+  }
 }

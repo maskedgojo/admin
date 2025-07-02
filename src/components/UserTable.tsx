@@ -3,19 +3,18 @@
 import { useState, useMemo, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import axios from 'axios'
-import { useRouter } from 'next/navigation'
-import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { format } from 'date-fns'
 import { ChevronDown } from 'lucide-react'
 import { useUsersContext } from '@/context/users-context'
 import { useRoleContext } from '@/context/role-context'
+import type { User } from '@/context/users-context'
+
 
 export default function UserTable() {
-  const router = useRouter()
-  const { users, loading: userLoading, error, refetchUsers } = useUsersContext()
-  const { roles: allRoles, loading: roleLoading, refreshRoles } = useRoleContext()
+  const { users, loading: userLoading, refetchUsers } = useUsersContext()
+  const { roles: allRoles, loading: roleLoading } = useRoleContext()
 
-  const [data, setData] = useState([])
+  const [data, setData] = useState<User[]>([])
   const [searchValue, setSearchValue] = useState('')
   const [form, setForm] = useState({
     name: '',
@@ -77,7 +76,7 @@ export default function UserTable() {
 
     setLoading(true)
     try {
-      const res = await axios.post('/api/users', {
+      await axios.post('/api/users', {
         ...form,
         dob: new Date(form.dob),
         roles: form.roles
@@ -88,6 +87,7 @@ export default function UserTable() {
       resetForm()
       setShowForm(false)
     } catch (err) {
+      console.error(err)
       toast.error('Add failed')
     } finally {
       setLoading(false)
@@ -113,13 +113,13 @@ export default function UserTable() {
       resetForm()
       setEditMode(null)
     } catch (err) {
+      console.error(err)
       toast.error('Update failed')
     } finally {
       setLoading(false)
     }
   }
-
-  const startEditing = (user: any) => {
+  const startEditing = (user: User) => {
     setEditMode(user.id)
     setForm({
       name: user.name || '',
@@ -345,8 +345,8 @@ if (isInitializing || userLoading || roleLoading) {
                         <label key={role.id} className="flex items-center space-x-3 p-3 hover:bg-gray-50 cursor-pointer">
                           <input
                             type="checkbox"
-                            checked={form.roles.includes(role.id)}
-                            onChange={() => handleRoleChange(role.id)}
+                             checked={form.roles.includes(Number(role.id))}
+                             onChange={() => handleRoleChange(Number(role.id))}
                             className="h-4 w-4 text-indigo-600 rounded focus:ring-indigo-500"
                           />
                           <div className="flex-1">
@@ -362,27 +362,28 @@ if (isInitializing || userLoading || roleLoading) {
                 </div>
                 
                 {form.roles.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {form.roles.map(roleId => {
-                      const role = allRoles.find(r => r.id === roleId);
-                      return role ? (
-                        <span 
-                          key={role.id} 
-                          className="bg-indigo-100 text-indigo-800 text-xs font-medium px-2 py-1 rounded flex items-center"
-                        >
-                          {role.name}
-                          <button
-                            type="button"
-                            onClick={() => handleRoleChange(role.id)}
-                            className="ml-1 text-indigo-600 hover:text-indigo-800"
-                          >
-                            ×
-                          </button>
-                        </span>
-                      ) : null;
-                    })}
-                  </div>
-                )}
+  <div className="mt-2 flex flex-wrap gap-2">
+    {form.roles.map(roleId => {
+      const role = allRoles.find(r => Number(r.id) === roleId)   // ← fixed
+      return role ? (
+        <span
+          key={role.id}
+          className="bg-indigo-100 text-indigo-800 text-xs font-medium px-2 py-1 rounded flex items-center"
+        >
+          {role.name}
+          <button
+            type="button"
+            onClick={() => handleRoleChange(roleId)}
+            className="ml-1 text-indigo-600 hover:text-indigo-800"
+          >
+            ×
+          </button>
+        </span>
+      ) : null
+    })}
+  </div>
+)}
+
               </div>
               
               <div className="md:col-span-2 flex justify-end">
@@ -443,10 +444,11 @@ if (isInitializing || userLoading || roleLoading) {
                   <td className="py-4 px-6">
                     <div className="text-sm text-gray-900">{user.email}</div>
                     {user.emailVerified && (
-                      <div className="text-xs text-green-600">
-                        Verified: {format(new Date(user.emailVerified), 'MMM d, yyyy')}
-                      </div>
-                    )}
+  <div className="text-xs text-green-600">
+    Verified: {format(new Date(user.emailVerified), 'MMM d, yyyy')}
+  </div>
+)}
+
                   </td>
                <td className="py-4 px-6">
                   <div className="flex flex-wrap gap-1">

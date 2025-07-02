@@ -7,7 +7,10 @@ import axios from 'axios'
 export type Role = {
   id: string
   name: string
+  description?: string
+  permissions?: string[]
 }
+
 
 type RoleContextType = {
   roles: Role[]

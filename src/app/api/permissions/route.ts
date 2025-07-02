@@ -1,82 +1,63 @@
+// app/api/permissions/route.ts
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 
-// GET: Return all unique permission keys used in any role
+/* ─────────── helper type that includes *id* and *permissions* ─────────── */
+type RolePerm = {
+  id: number            // ‑- or string, match your Prisma schema
+  permissions: Record<string, boolean> | null
+}
+
+/* ───────────────────────────── GET ───────────────────────────── */
+
 export async function GET() {
   const roles = await prisma.role.findMany({
-    select: { permissions: true }
-  })
+    select: { id: true, permissions: true },   // ← include id as well
+  }) as RolePerm[]
 
   const allPermissions = new Set<string>()
 
-  roles.forEach(role => {
+  roles.forEach((role) => {
     if (role.permissions) {
-      Object.entries(role.permissions).forEach(([key, value]) => {
+      for (const [key, value] of Object.entries(role.permissions)) {
         if (value) allPermissions.add(key)
-      })
+      }
     }
   })
 
   return NextResponse.json([...allPermissions])
 }
 
-// POST: Add a new permission key by assigning it to a role
-export async function POST(req: Request) {
-  const { name } = await req.json()
-  if (!name) {
-    return NextResponse.json({ error: 'Permission name is required' }, { status: 400 })
-  }
+/* ──────────────────────────── DELETE ────────────────────────── */
 
-  // Try to find any role
-  let role = await prisma.role.findFirst()
-
-  // If no roles exist, create a dummy one
-  if (!role) {
-    role = await prisma.role.create({
-      data: {
-        name: 'placeholder',
-        description: 'Auto-created role for holding permissions',
-        permissions: { [name]: true },
-      }
-    })
-  } else {
-    // Update the existing role with the new permission
-    const updatedPermissions = {
-      ...(role.permissions || {}),
-      [name]: true,
-    }
-
-    await prisma.role.update({
-      where: { id: role.id },
-      data: { permissions: updatedPermissions },
-    })
-  }
-
-  return NextResponse.json({ message: `Permission "${name}" added` })
-}
-
-// DELETE: Remove a permission key from all roles
 export async function DELETE(req: Request) {
   const { searchParams } = new URL(req.url)
   const name = searchParams.get('name')
 
   if (!name) {
-    return NextResponse.json({ error: 'Permission name is required' }, { status: 400 })
+    return NextResponse.json(
+      { error: 'Permission name is required' },
+      { status: 400 }
+    )
   }
 
-  const roles = await prisma.role.findMany()
+  const roles = await prisma.role.findMany({
+    select: { id: true, permissions: true },
+  }) as RolePerm[]
 
   await Promise.all(
-    roles.map(role => {
-      const updatedPermissions = { ...(role.permissions || {}) }
-      delete updatedPermissions[name]
+    roles.map((role) => {
+      const updated = { ...(role.permissions || {}) }
+      delete updated[name]
 
       return prisma.role.update({
-        where: { id: role.id },
-        data: { permissions: updatedPermissions },
+        where: { id: role.id },          // ✅ no “any” cast needed
+        data: { permissions: updated },
       })
     })
   )
 
-  return NextResponse.json({ message: `Permission "${name}" deleted from all roles` })
+  return NextResponse.json({
+    message: `Permission "${name}" deleted from all roles`,
+  })
 }

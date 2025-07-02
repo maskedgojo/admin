@@ -24,7 +24,7 @@ export default async function ProductsPage() {
     },
   })
 
-  const allowed = user?.userRoles.some(r =>
+  const allowed = user?.userRoles.some((r: { role: { name: string } }) =>
     ['Admin', 'InventoryManager'].includes(r.role.name)
   )
 
